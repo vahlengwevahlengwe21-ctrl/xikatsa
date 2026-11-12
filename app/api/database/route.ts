@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import {
   FINANCE_CONTROL_ROLES,
   FINANCE_RECORDING_ROLES,
+  GALLERY_MANAGEMENT_ROLES,
   GOVERNANCE_ROLES,
   ANNOUNCEMENT_MANAGEMENT_ROLES,
   MEMBER_MANAGEMENT_ROLES,
@@ -333,8 +334,8 @@ function authorize(operation: string, user: SessionUser) {
   if (operation === 'overview.load' || operation === 'announcements.list' || operation === 'claims.list' || operation === 'programs.active') allowed = [...STAFF_ROLES, 'member'];
   if (operation === 'policy.load' || operation === 'policy.download') allowed = [...STAFF_ROLES, 'member'];
   if (operation === 'policy.save') allowed = POLICY_MANAGEMENT_ROLES;
-  if (operation === 'gallery.add' || operation === 'gallery.delete') allowed = ['secretary', 'deputy-secretary'];
-  if (operation === 'gallery.founder.save' || operation === 'gallery.founder.delete') allowed = ['secretary', 'deputy-secretary'];
+  if (operation === 'gallery.add' || operation === 'gallery.delete') allowed = GALLERY_MANAGEMENT_ROLES;
+  if (operation === 'gallery.founder.save' || operation === 'gallery.founder.delete') allowed = GALLERY_MANAGEMENT_ROLES;
   if (operation === 'finance.memberSummary' || operation === 'finance.controls.load' ||
       operation === 'transactions.list') allowed = STAFF_ROLES;
   if (operation === 'finance.openingBalance.save') allowed = FINANCE_CONTROL_ROLES;

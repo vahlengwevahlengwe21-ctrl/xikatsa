@@ -64,6 +64,12 @@ export const POLICY_MANAGEMENT_ROLES: Role[] = [
   'deputy-secretary',
 ];
 
+export const GALLERY_MANAGEMENT_ROLES: Role[] = [
+  'super-administrator',
+  'secretary',
+  'deputy-secretary',
+];
+
 export function canManageMembers(role: Role) {
   return MEMBER_MANAGEMENT_ROLES.includes(role);
 }
@@ -83,7 +89,7 @@ export function canRemoveBeneficiaries(role: Role) {
 }
 
 export const ROLE_NAV_RULES: Record<Role, Array<'/' | '/members' | '/finance' | '/benefits' | '/announcements' | '/policy' | '/gallery' | '/settings'>> = {
-  'super-administrator': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
+  'super-administrator': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/gallery', '/settings'],
   chairperson: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   'deputy-chairperson': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   finance: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
@@ -104,7 +110,7 @@ export const ANNOUNCEMENT_MANAGEMENT_ROLES: Role[] = [
 export const SOCIETY_SETTINGS_ROLES: Role[] = FINANCE_CONTROL_ROLES;
 
 export const ROLE_DASHBOARD_COPY: Record<Role, string> = {
-  'super-administrator': 'Full access to all application functions, settings, staff roles, finance, members, benefits, policy, and announcements.',
+  'super-administrator': 'Full access to all application functions, settings, staff roles, finance, members, benefits, policy, announcements, and photos.',
   chairperson: 'Governance lead: oversee society settings and finance, manage member records, review benefit claims, and lead policy and announcement decisions.',
   'deputy-chairperson': 'Governance support: help manage member records, review benefit claims, and support policy, announcement, and society oversight.',
   finance: 'Finance lead: record contributions, fines, receipts, expenses, and payouts; reconcile monthly balances and maintain finance settings.',
