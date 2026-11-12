@@ -19,6 +19,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ROLE_LABELS, type CommitteeOfficeRole } from '@/lib/auth';
 
 const navigation = [
   { id: 'about', label: 'About us' },
@@ -33,6 +34,13 @@ interface GalleryPhoto {
   caption: string;
   mime_type: string;
   created_at: string;
+}
+
+interface CommitteeProfile {
+  role_key: CommitteeOfficeRole;
+  full_name: string;
+  bio: string;
+  has_photo: boolean | number;
 }
 
 const values = [
@@ -70,6 +78,8 @@ export function LandingPage({ onLogin }: { onLogin: () => void }) {
   const [activePhoto, setActivePhoto] = useState(0);
   const [isSlideshowPaused, setIsSlideshowPaused] = useState(false);
   const [founderPhotoAvailable, setFounderPhotoAvailable] = useState(false);
+  const [committeeProfiles, setCommitteeProfiles] = useState<CommitteeProfile[] | null>(null);
+  const [committeeProfileError, setCommitteeProfileError] = useState<string | null>(null);
 
   function navigateTo(view: LandingView) {
     setActiveView(view);
@@ -94,6 +104,30 @@ export function LandingPage({ onLogin }: { onLogin: () => void }) {
       })
       .catch(() => {
         if (!cancelled) setPhotoError('Society photos are temporarily unavailable.');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeView]);
+
+  useEffect(() => {
+    if (activeView !== 'about') return;
+
+    let cancelled = false;
+    fetch('/api/committee', { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Committee profiles are temporarily unavailable.');
+        return (await response.json()) as { profiles?: CommitteeProfile[] };
+      })
+      .then((result) => {
+        if (!cancelled) {
+          setCommitteeProfiles(result.profiles ?? []);
+          setCommitteeProfileError(null);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCommitteeProfileError('Committee profiles are temporarily unavailable.');
       });
 
     return () => {
@@ -385,6 +419,58 @@ export function LandingPage({ onLogin }: { onLogin: () => void }) {
                 </div>
               </section>
             </div>
+            <section aria-labelledby="committee-title" className="mt-12">
+              <div className="mx-auto max-w-2xl text-center">
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#b9783f]">Our committee</p>
+                <h2 id="committee-title" className="mt-3 font-heading text-3xl font-semibold tracking-[-0.04em] text-[#173c32] sm:text-4xl">
+                  People entrusted to serve.
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-[#718078]">
+                  Meet the office-holders helping guide Xikatsa Society and care for our shared community.
+                </p>
+              </div>
+              {committeeProfileError && (
+                <p role="status" className="mt-6 text-center text-sm text-[#718078]">{committeeProfileError}</p>
+              )}
+              {committeeProfiles && committeeProfiles.length === 0 && !committeeProfileError && (
+                <p className="mt-6 text-center text-sm text-[#718078]">Committee profiles will appear here.</p>
+              )}
+              {committeeProfiles && committeeProfiles.length > 0 && (
+                <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {committeeProfiles.map((profile) => (
+                    <article key={`${profile.role_key}-${profile.full_name}`} className="overflow-hidden rounded-2xl border border-[#e4e8df] bg-white p-5 shadow-sm">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-[#e9f0e7] text-[#64836d]">
+                          {Boolean(Number(profile.has_photo)) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={`/api/committee/${profile.role_key}/photo`}
+                              alt={`${profile.full_name}, ${ROLE_LABELS[profile.role_key]}`}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <UsersRound className="h-7 w-7" aria-hidden />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="truncate font-heading text-base font-semibold text-[#244b3b]">{profile.full_name}</h3>
+                          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-[#b9783f]">
+                            {ROLE_LABELS[profile.role_key]}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="mt-4 min-h-10 text-sm leading-5 text-[#718078]">
+                        {profile.bio || `Serving Xikatsa Society as ${ROLE_LABELS[profile.role_key]}.`}
+                      </p>
+                    </article>
+                  ))}
+                </div>
+              )}
+              {!committeeProfiles && !committeeProfileError && (
+                <p className="mt-6 text-center text-sm text-[#718078]">Loading committee profiles…</p>
+              )}
+            </section>
             <div className="mt-10 grid gap-4 sm:grid-cols-3">
               {[
                 { title: 'A shared community', text: 'Members come together with a common purpose and a commitment to one another.' },

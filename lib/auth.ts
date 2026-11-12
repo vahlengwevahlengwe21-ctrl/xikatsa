@@ -8,6 +8,17 @@ export type Role =
   | 'deputy-secretary'
   | 'member';
 
+export const COMMITTEE_OFFICE_ROLES = [
+  'chairperson',
+  'deputy-chairperson',
+  'finance',
+  'deputy-finance',
+  'secretary',
+  'deputy-secretary',
+] as const;
+
+export type CommitteeOfficeRole = (typeof COMMITTEE_OFFICE_ROLES)[number];
+
 export const SESSION_EXPIRED_EVENT = 'xikatsa:session-expired';
 
 export const MEMBER_ROLES: Role[] = [

@@ -24,6 +24,12 @@ database.execute("SELECT mime_type, TO_BASE64(image_data) AS image_base64 FROM s
 database.execute("SELECT id, caption, mime_type, created_at FROM society_gallery ORDER BY created_at ASC, id ASC");
 database.execute("SELECT id FROM society_gallery WHERE id = ?");
 database.execute("DELETE FROM society_gallery WHERE id = ?");
+database.execute("SELECT r.role_key, u.full_name, COALESCE(p.bio, '') AS bio, p.image_data IS NOT NULL AS has_photo FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id JOIN society_committee_profiles p ON p.role_key = r.role_key WHERE r.role_key IN ('chairperson', 'deputy-chairperson', 'finance', 'deputy-finance', 'secretary', 'deputy-secretary') AND u.is_active = TRUE ORDER BY r.id ASC, u.full_name ASC");
+database.execute("SELECT r.role_key, r.label, u.id AS user_id, u.full_name, COALESCE(p.bio, '') AS bio, p.image_data IS NOT NULL AS has_photo FROM roles r LEFT JOIN user_roles ur ON ur.role_id = r.id LEFT JOIN users u ON u.id = ur.user_id AND u.is_active = TRUE LEFT JOIN society_committee_profiles p ON p.role_key = r.role_key WHERE r.role_key IN ('chairperson', 'deputy-chairperson', 'finance', 'deputy-finance', 'secretary', 'deputy-secretary') ORDER BY r.id ASC, u.full_name ASC");
+database.execute("SELECT mime_type, TO_BASE64(image_data) AS image_base64 FROM society_committee_profiles WHERE role_key = ? AND image_data IS NOT NULL");
+database.execute("INSERT INTO society_committee_profiles (role_key, bio, updated_by_role) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE bio = VALUES(bio), updated_by_role = VALUES(updated_by_role)");
+database.execute("INSERT INTO society_committee_profiles (role_key, bio, mime_type, image_size, image_data, updated_by_role) VALUES (?, ?, ?, ?, FROM_BASE64(?), ?) ON DUPLICATE KEY UPDATE bio = VALUES(bio), mime_type = VALUES(mime_type), image_size = VALUES(image_size), image_data = VALUES(image_data), updated_by_role = VALUES(updated_by_role)");
+database.execute("UPDATE society_committee_profiles SET mime_type = NULL, image_size = NULL, image_data = NULL, updated_by_role = ? WHERE role_key = ?");
 database.execute("INSERT INTO society_founder_photo (id, mime_type, image_size, image_data, updated_by_role) VALUES (1, ?, ?, FROM_BASE64(?), ?) ON DUPLICATE KEY UPDATE mime_type = VALUES(mime_type), image_size = VALUES(image_size), image_data = VALUES(image_data), updated_by_role = VALUES(updated_by_role)");
 database.execute("SELECT mime_type, TO_BASE64(image_data) AS image_base64 FROM society_founder_photo WHERE id = 1");
 database.execute("DELETE FROM society_founder_photo WHERE id = 1");
@@ -53,6 +59,7 @@ database.execute("SELECT created_at FROM dependants WHERE id = ? AND member_id =
 database.execute("SELECT date_joined, status, deceased_at FROM members WHERE id = ?");
 database.execute("SELECT id FROM beneficiaries WHERE id = ? AND member_id = ? AND is_active = TRUE AND deceased_at IS NULL LIMIT 1");
 database.execute("SELECT id FROM beneficiaries WHERE id_number = ? AND id <> ? LIMIT 1");
+database.execute("SELECT role_key, label FROM roles WHERE role_key IN ('chairperson', 'deputy-chairperson', 'finance', 'deputy-finance', 'secretary', 'deputy-secretary') ORDER BY id ASC");
 database.execute("SELECT id FROM members WHERE id_number = ? AND id <> ? LIMIT 1");
 database.execute("SELECT id FROM roles WHERE role_key = ? LIMIT 1");
 database.execute("SELECT id FROM users WHERE email = ? AND (member_id IS NULL OR member_id <> ?) LIMIT 1");

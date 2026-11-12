@@ -6,6 +6,7 @@ import {
   GALLERY_MANAGEMENT_ROLES,
   GOVERNANCE_ROLES,
   ANNOUNCEMENT_MANAGEMENT_ROLES,
+  COMMITTEE_OFFICE_ROLES,
   MEMBER_MANAGEMENT_ROLES,
   POLICY_MANAGEMENT_ROLES,
   SOCIETY_SETTINGS_ROLES,
@@ -156,6 +157,14 @@ const sql = {
         SELECT 1 FROM user_roles protected_ur JOIN roles protected_r ON protected_r.id = protected_ur.role_id
         WHERE protected_ur.user_id = u.id AND protected_r.role_key = 'super-administrator'
       )
+    ORDER BY r.id ASC, u.full_name ASC`,
+  committeeProfilesAdmin: `SELECT r.role_key, r.label, u.id AS user_id, u.full_name,
+      COALESCE(p.bio, '') AS bio, p.image_data IS NOT NULL AS has_photo
+    FROM roles r
+    LEFT JOIN user_roles ur ON ur.role_id = r.id
+    LEFT JOIN users u ON u.id = ur.user_id AND u.is_active = TRUE
+    LEFT JOIN society_committee_profiles p ON p.role_key = r.role_key
+    WHERE r.role_key IN ('chairperson', 'deputy-chairperson', 'finance', 'deputy-finance', 'secretary', 'deputy-secretary')
     ORDER BY r.id ASC, u.full_name ASC`,
   committeeAccount: `SELECT u.member_id, m.deceased_at, r.role_key AS role
     FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id
@@ -336,6 +345,8 @@ function authorize(operation: string, user: SessionUser) {
   if (operation === 'policy.save') allowed = POLICY_MANAGEMENT_ROLES;
   if (operation === 'gallery.add' || operation === 'gallery.delete') allowed = GALLERY_MANAGEMENT_ROLES;
   if (operation === 'gallery.founder.save' || operation === 'gallery.founder.delete') allowed = GALLERY_MANAGEMENT_ROLES;
+  if (operation === 'committee.profiles.list' || operation === 'committee.profile.save' ||
+      operation === 'committee.profile.deletePhoto') allowed = GALLERY_MANAGEMENT_ROLES;
   if (operation === 'finance.memberSummary' || operation === 'finance.controls.load' ||
       operation === 'transactions.list') allowed = STAFF_ROLES;
   if (operation === 'finance.openingBalance.save') allowed = FINANCE_CONTROL_ROLES;
@@ -1173,6 +1184,49 @@ async function handle(operation: string, input: Input, user: SessionUser): Promi
         throw new DatabaseError('The selected photo could not be found.', 404);
       }
       await execute('DELETE FROM society_gallery WHERE id = ?', [id]);
+      return { deleted: true };
+    }
+    case 'committee.profiles.list':
+      return rows(await execute(sql.committeeProfilesAdmin));
+    case 'committee.profile.save': {
+      const role = choice(input, 'role_key', COMMITTEE_OFFICE_ROLES);
+      const bio = (text(input, 'bio', false) ?? '').trim();
+      const mimeType = text(input, 'mime_type', false);
+      const encodedImage = text(input, 'image_base64', false);
+      if (bio.length > 280) throw new DatabaseError('Committee bios must be no more than 280 characters.', 400);
+      if (Boolean(mimeType) !== Boolean(encodedImage)) {
+        throw new DatabaseError('Select a supported photo to publish with this profile.', 400);
+      }
+
+      if (mimeType && encodedImage) {
+        const { mimeType: validMimeType, encodedImage: validImage, image } = galleryImage({
+          mime_type: mimeType,
+          image_base64: encodedImage,
+        });
+        await execute(
+          `INSERT INTO society_committee_profiles
+            (role_key, bio, mime_type, image_size, image_data, updated_by_role)
+           VALUES (?, ?, ?, ?, FROM_BASE64(?), ?)
+           ON DUPLICATE KEY UPDATE bio = VALUES(bio), mime_type = VALUES(mime_type),
+             image_size = VALUES(image_size), image_data = VALUES(image_data), updated_by_role = VALUES(updated_by_role)`,
+          [role, bio, validMimeType, image.length, validImage, user.role],
+        );
+      } else {
+        await execute(
+          `INSERT INTO society_committee_profiles (role_key, bio, updated_by_role)
+           VALUES (?, ?, ?)
+           ON DUPLICATE KEY UPDATE bio = VALUES(bio), updated_by_role = VALUES(updated_by_role)`,
+          [role, bio, user.role],
+        );
+      }
+      return { saved: true };
+    }
+    case 'committee.profile.deletePhoto': {
+      const role = choice(input, 'role_key', COMMITTEE_OFFICE_ROLES);
+      await execute(
+        'UPDATE society_committee_profiles SET mime_type = NULL, image_size = NULL, image_data = NULL, updated_by_role = ? WHERE role_key = ?',
+        [user.role, role],
+      );
       return { deleted: true };
     }
     case 'finance.openingBalance.save': {
