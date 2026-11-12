@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpenText, HeartHandshake, LayoutDashboard, Landmark, Megaphone, Menu, Settings, Users, Wallet, X } from 'lucide-react';
+import { BookOpenText, HeartHandshake, Image, LayoutDashboard, Landmark, Megaphone, Menu, Settings, Users, Wallet, X } from 'lucide-react';
 import { canAccessSettings, getSession, ROLE_NAV_RULES, type Role } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { href: '/benefits', label: 'Benefits', icon: HeartHandshake },
   { href: '/announcements', label: 'Announcements', icon: Megaphone },
   { href: '/policy', label: 'Society policy', icon: BookOpenText },
+  { href: '/gallery', label: 'Photo gallery', icon: Image },
   { href: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -33,7 +34,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const navItems = NAV_ITEMS.filter((item) => {
     if (!role) return true;
     if (item.href === '/settings') return canAccessSettings(role);
-    return ROLE_NAV_RULES[role].includes(item.href as '/' | '/members' | '/finance' | '/benefits' | '/announcements' | '/policy' | '/settings');
+    return ROLE_NAV_RULES[role].includes(item.href as '/' | '/members' | '/finance' | '/benefits' | '/announcements' | '/policy' | '/gallery' | '/settings');
   });
 
   return (

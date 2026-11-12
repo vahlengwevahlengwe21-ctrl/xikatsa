@@ -17,6 +17,16 @@ database.execute("INSERT INTO society_settings (setting_key, setting_value) VALU
 database.execute("SELECT opening_balance, effective_month FROM society_finance_opening_balance WHERE id = 1");
 database.execute("INSERT INTO society_finance_opening_balance (id, opening_balance, effective_month, updated_by_role) VALUES (1, ?, ?, ?) ON DUPLICATE KEY UPDATE opening_balance = VALUES(opening_balance), effective_month = VALUES(effective_month), updated_by_role = VALUES(updated_by_role)");
 database.execute("UPDATE society_policy SET document_name = ?, document_mime_type = ?, document_size = ?, document_data = FROM_BASE64(?), updated_by_role = ? WHERE id = 1");
+database.execute("INSERT INTO society_gallery (id, caption, mime_type, image_size, image_data, published_by_role) VALUES (?, ?, ?, ?, FROM_BASE64(?), ?)");
+database.execute("SELECT COUNT(*) AS photo_count FROM society_gallery");
+database.execute("SELECT id, caption, mime_type, created_at FROM society_gallery ORDER BY created_at ASC, id ASC LIMIT 100");
+database.execute("SELECT mime_type, TO_BASE64(image_data) AS image_base64 FROM society_gallery WHERE id = ?");
+database.execute("SELECT id, caption, mime_type, created_at FROM society_gallery ORDER BY created_at ASC, id ASC");
+database.execute("SELECT id FROM society_gallery WHERE id = ?");
+database.execute("DELETE FROM society_gallery WHERE id = ?");
+database.execute("INSERT INTO society_founder_photo (id, mime_type, image_size, image_data, updated_by_role) VALUES (1, ?, ?, FROM_BASE64(?), ?) ON DUPLICATE KEY UPDATE mime_type = VALUES(mime_type), image_size = VALUES(image_size), image_data = VALUES(image_data), updated_by_role = VALUES(updated_by_role)");
+database.execute("SELECT mime_type, TO_BASE64(image_data) AS image_base64 FROM society_founder_photo WHERE id = 1");
+database.execute("DELETE FROM society_founder_photo WHERE id = 1");
 database.execute("UPDATE society_settings AS s LEFT JOIN members AS m ON s.setting_key = 'defaultMonthlyContribution' SET s.setting_value = CASE s.setting_key WHEN 'joiningFee' THEN ? WHEN 'defaultMonthlyContribution' THEN ? WHEN 'waitingPeriodMonths' THEN ? END, m.monthly_contribution = ? WHERE s.setting_key IN ('joiningFee', 'defaultMonthlyContribution', 'waitingPeriodMonths')");
 database.execute("INSERT INTO transactions (kind, amount, description, category, occurred_on, member_id, claim_id) VALUES ('benefit_payout', ?, ?, 'Benefits', ?, ?, ?)");
 database.execute("INSERT INTO transactions (kind, amount, description, category, reference, occurred_on, member_id, claim_id, recorded_by_role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");

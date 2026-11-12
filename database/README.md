@@ -14,6 +14,8 @@ Apply these MariaDB migrations in order:
 10. `migrations/20261110_retire_administrator_role_mariadb.sql`
 11. `migrations/20261110_committee_membership_mariadb.sql`
 12. `migrations/20261110_separate_dependants_death_beneficiaries_mariadb.sql`
+13. `migrations/20261112_society_gallery_mariadb.sql`
+14. `migrations/20261113_society_founder_photo_mariadb.sql`
 
 Configure `DATABASE_GATEWAY_URL` and `DATABASE_GATEWAY_TOKEN` in the server environment. The application does not seed demo users and has no public registration flow. Create the first super-administrator directly in MariaDB:
 
@@ -63,6 +65,8 @@ WHERE u.login_id = 'REPLACE_WITH_13_DIGIT_ID'
 The user contact-number migration makes the existing email column nullable and adds `users.contact_number`. Existing account emails are preserved, and their contact number remains blank until updated in Settings.
 
 The Society Policy page is readable by all signed-in roles. Super Administrator, Chairperson, Deputy Chairperson, Secretary, and Deputy Secretary roles may upload or amend the shared PDF or DOCX policy document (up to 8 MB); all other signed-in roles can download it. Policy changes record the amending role and timestamp in `society_policy`. Synchronize the policy SQL statements from `gateway-queries.ts` to the database gateway and restart the gateway service when deploying this feature.
+
+The public About us page includes a slideshow of society meeting and event photos, as well as a separate founder portrait. Secretary and Deputy Secretary accounts can publish or remove event photos and publish, replace, or remove the founder portrait from the authenticated Photo gallery page. Event uploads accept JPEG, PNG, or WebP images up to 3 MB each, with a maximum of 100 published photos; captions are optional. The founder portrait accepts the same image types and size limit. Published photos are publicly visible, so only upload images approved for the public website. Apply `migrations/20261112_society_gallery_mariadb.sql` and `migrations/20261113_society_founder_photo_mariadb.sql`, synchronize the gallery SQL statements from `gateway-queries.ts` to the database gateway, and restart the gateway service before deploying the gallery and founder portrait.
 
 The Settings page includes the six-role committee membership roster. Users with governance permissions may record a committee member as deceased; this marks the linked membership inactive, records the current date, disables sign-in, and revokes sessions without deleting financial, dependant, or claim history. The deceased account and its role assignment remain for audit history; the system owner can create a replacement account for the vacant role. Do not reactivate or edit a deceased account. Apply the committee-membership migration before using this roster, then synchronize its SQL statements from `gateway-queries.ts` and restart the database gateway.
 

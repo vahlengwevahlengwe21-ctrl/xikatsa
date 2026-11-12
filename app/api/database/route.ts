@@ -298,12 +298,43 @@ const STAFF_ROLES: Role[] = [
   'finance', 'deputy-finance', 'secretary', 'deputy-secretary',
 ];
 const MAX_POLICY_DOCUMENT_SIZE = 8 * 1024 * 1024;
+const MAX_GALLERY_IMAGE_SIZE = 3 * 1024 * 1024;
+
+function galleryImage(input: Input) {
+  const mimeType = choice(input, 'mime_type', ['image/jpeg', 'image/png', 'image/webp'] as const);
+  const encodedImage = text(input, 'image_base64') as string;
+  const maximumEncodedLength = Math.ceil(MAX_GALLERY_IMAGE_SIZE / 3) * 4;
+  if (
+    encodedImage.length === 0 ||
+    encodedImage.length > maximumEncodedLength ||
+    !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(encodedImage)
+  ) {
+    throw new DatabaseError('Choose an image no larger than 3 MB.', 400);
+  }
+
+  const image = Buffer.from(encodedImage, 'base64');
+  if (image.length === 0 || image.length > MAX_GALLERY_IMAGE_SIZE || image.toString('base64') !== encodedImage) {
+    throw new DatabaseError('The photo upload is invalid or exceeds 3 MB.', 400);
+  }
+  const validSignature = mimeType === 'image/jpeg'
+    ? image.length >= 3 && image[0] === 0xff && image[1] === 0xd8 && image[2] === 0xff
+    : mimeType === 'image/png'
+      ? image.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))
+      : image.length >= 12 &&
+        image.toString('ascii', 0, 4) === 'RIFF' &&
+        image.toString('ascii', 8, 12) === 'WEBP';
+  if (!validSignature) throw new DatabaseError('The photo content does not match its image type.', 400);
+
+  return { mimeType, encodedImage, image };
+}
 
 function authorize(operation: string, user: SessionUser) {
   let allowed: Role[] = STAFF_ROLES;
   if (operation === 'overview.load' || operation === 'announcements.list' || operation === 'claims.list' || operation === 'programs.active') allowed = [...STAFF_ROLES, 'member'];
   if (operation === 'policy.load' || operation === 'policy.download') allowed = [...STAFF_ROLES, 'member'];
   if (operation === 'policy.save') allowed = POLICY_MANAGEMENT_ROLES;
+  if (operation === 'gallery.add' || operation === 'gallery.delete') allowed = ['secretary', 'deputy-secretary'];
+  if (operation === 'gallery.founder.save' || operation === 'gallery.founder.delete') allowed = ['secretary', 'deputy-secretary'];
   if (operation === 'finance.memberSummary' || operation === 'finance.controls.load' ||
       operation === 'transactions.list') allowed = STAFF_ROLES;
   if (operation === 'finance.openingBalance.save') allowed = FINANCE_CONTROL_ROLES;
@@ -1098,6 +1129,50 @@ async function handle(operation: string, input: Input, user: SessionUser): Promi
         ]);
       }
       return { saved: true };
+    }
+    case 'gallery.add': {
+      const caption = (text(input, 'caption', false) ?? '').trim();
+      const { mimeType, encodedImage, image } = galleryImage(input);
+      if (caption.length > 180) throw new DatabaseError('Captions must be no more than 180 characters.', 400);
+
+      const count = await one<{ photo_count: number }>('SELECT COUNT(*) AS photo_count FROM society_gallery');
+      if (Number(count?.photo_count ?? 0) >= 100) {
+        throw new DatabaseError('The society gallery can contain up to 100 photos.', 409);
+      }
+      await execute(
+        'INSERT INTO society_gallery (id, caption, mime_type, image_size, image_data, published_by_role) VALUES (?, ?, ?, ?, FROM_BASE64(?), ?)',
+        [randomUUID(), caption, mimeType, image.length, encodedImage, user.role],
+      );
+      return { added: true };
+    }
+    case 'gallery.founder.save': {
+      const { mimeType, encodedImage, image } = galleryImage(input);
+      await execute(
+        `INSERT INTO society_founder_photo (id, mime_type, image_size, image_data, updated_by_role)
+         VALUES (1, ?, ?, FROM_BASE64(?), ?)
+         ON DUPLICATE KEY UPDATE mime_type = VALUES(mime_type), image_size = VALUES(image_size),
+           image_data = VALUES(image_data), updated_by_role = VALUES(updated_by_role)`,
+        [mimeType, image.length, encodedImage, user.role],
+      );
+      return { saved: true };
+    }
+    case 'gallery.founder.delete': {
+      if (!(await one('SELECT mime_type FROM society_founder_photo WHERE id = 1'))) {
+        throw new DatabaseError('The founder portrait has not been published.', 404);
+      }
+      await execute('DELETE FROM society_founder_photo WHERE id = 1');
+      return { deleted: true };
+    }
+    case 'gallery.delete': {
+      const id = text(input, 'id') as string;
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
+        throw new DatabaseError('The selected photo could not be found.', 404);
+      }
+      if (!(await one('SELECT id FROM society_gallery WHERE id = ?', [id]))) {
+        throw new DatabaseError('The selected photo could not be found.', 404);
+      }
+      await execute('DELETE FROM society_gallery WHERE id = ?', [id]);
+      return { deleted: true };
     }
     case 'finance.openingBalance.save': {
       const amount = signedMoney(input, 'amount');

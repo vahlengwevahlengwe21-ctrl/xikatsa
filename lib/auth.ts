@@ -82,14 +82,14 @@ export function canRemoveBeneficiaries(role: Role) {
   return BENEFICIARY_REMOVAL_ROLES.includes(role);
 }
 
-export const ROLE_NAV_RULES: Record<Role, Array<'/' | '/members' | '/finance' | '/benefits' | '/announcements' | '/policy' | '/settings'>> = {
+export const ROLE_NAV_RULES: Record<Role, Array<'/' | '/members' | '/finance' | '/benefits' | '/announcements' | '/policy' | '/gallery' | '/settings'>> = {
   'super-administrator': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   chairperson: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   'deputy-chairperson': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   finance: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
   'deputy-finance': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
-  secretary: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
-  'deputy-secretary': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/settings'],
+  secretary: ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/gallery', '/settings'],
+  'deputy-secretary': ['/', '/members', '/finance', '/benefits', '/announcements', '/policy', '/gallery', '/settings'],
   member: ['/', '/benefits', '/announcements', '/policy'],
 };
 
