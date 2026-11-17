@@ -1,11 +1,14 @@
 'use client';
 
+import NextImage from 'next/image';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { BookOpenText, HeartHandshake, Image, LayoutDashboard, Landmark, Megaphone, Menu, Settings, Users, Wallet, X } from 'lucide-react';
 import { canAccessSettings, getSession, ROLE_NAV_RULES, type Role } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+
+const SOCIETY_LOGO = '/Xikatsa%20Society%20Green%20Grass%20Logo.png';
 
 const NAV_ITEMS = [
   { href: '/', label: 'Overview', icon: LayoutDashboard },
@@ -40,8 +43,8 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col text-white">
       <div className="flex items-center gap-3 px-6 pb-8 pt-7">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 ring-1 ring-white/20">
-          <Landmark className="h-5 w-5" aria-hidden />
+        <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/15 ring-1 ring-white/20">
+          <NextImage src={SOCIETY_LOGO} alt="Xikatsa Society logo" width={40} height={40} priority className="h-full w-full object-cover" />
         </div>
         <div>
           <p className="font-heading text-base font-bold tracking-wide">XIKATSA</p>
@@ -94,8 +97,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur lg:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-white">
-            <Landmark className="h-4 w-4" aria-hidden />
+          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg bg-primary text-white">
+            <NextImage src={SOCIETY_LOGO} alt="Xikatsa Society logo" width={32} height={32} className="h-full w-full object-cover" />
           </div>
           <span className="font-heading text-sm font-bold tracking-wide text-foreground">XIKATSA SOCIETY</span>
         </div>

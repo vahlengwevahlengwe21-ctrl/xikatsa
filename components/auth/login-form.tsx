@@ -38,11 +38,15 @@ export function LoginForm({ onLoggedIn }: { onLoggedIn: (user: SessionUser) => v
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-emerald-100 via-white to-sky-100 px-4 py-10">
       <Card className="w-full max-w-md overflow-hidden shadow-xl">
         <CardHeader className="bg-emerald-950 px-6 py-6 text-white">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20">
-            <ShieldCheck className="h-6 w-6" aria-hidden />
+          <div className="flex items-center gap-4 sm:gap-5">
+            <div className="flex h-20 w-24 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/20 sm:h-24 sm:w-28">
+              <img src="/Xikatsa%20Society%20Green%20Grass%20Logo.png" alt="Xikatsa Society logo" className="h-full w-full object-cover" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className="font-heading text-lg leading-tight text-white sm:text-2xl">XIKATSA SOCIETY</CardTitle>
+              <CardDescription className="mt-2 text-sm text-emerald-100">Secure governance portal</CardDescription>
+            </div>
           </div>
-          <CardTitle className="font-heading text-2xl text-white">XIKATSA SOCIETY</CardTitle>
-          <CardDescription className="text-emerald-100">Secure governance portal</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5 p-6">
           <form onSubmit={handleSubmit} className="space-y-4">

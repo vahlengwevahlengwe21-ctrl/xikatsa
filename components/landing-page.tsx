@@ -21,6 +21,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { ROLE_LABELS, type CommitteeOfficeRole } from '@/lib/auth';
 
+const SOCIETY_LOGO = '/Xikatsa%20Society%20Green%20Grass%20Logo.png';
+
 const navigation = [
   { id: 'about', label: 'About us' },
   { id: 'mission', label: 'Our mission' },
@@ -174,8 +176,8 @@ export function LandingPage({ onLogin }: { onLogin: () => void }) {
           className="flex items-center gap-3 text-left"
           aria-label="Xikatsa Society home"
         >
-          <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#17483b] text-white shadow-lg shadow-emerald-950/10">
-            <Landmark className="h-5 w-5" aria-hidden />
+          <span className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-[#17483b] text-white shadow-lg shadow-emerald-950/10">
+            <img src={SOCIETY_LOGO} alt="Xikatsa Society logo" className="h-full w-full object-cover" />
           </span>
           <span>
             <span className="block font-heading text-sm font-extrabold tracking-[0.12em]">XIKATSA</span>
